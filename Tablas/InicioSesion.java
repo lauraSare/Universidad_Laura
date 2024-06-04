@@ -4,11 +4,24 @@
  */
 package Tablas;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author laura
  */
 public class InicioSesion extends javax.swing.JFrame {
+
+    private String contraseña;
+    private Object conexión;
+    
+    
+    
 
     /**
      * Creates new form InicioSesion
@@ -34,7 +47,8 @@ public class InicioSesion extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         btn_Usuario_ = new javax.swing.JTextField();
-        btn_Contraseña_ = new javax.swing.JTextField();
+        btn_IniciarSesion_ = new javax.swing.JButton();
+        jPasswordField = new javax.swing.JPasswordField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -71,9 +85,19 @@ public class InicioSesion extends javax.swing.JFrame {
             }
         });
 
-        btn_Contraseña_.addActionListener(new java.awt.event.ActionListener() {
+        btn_IniciarSesion_.setFont(new java.awt.Font("Mongolian Baiti", 1, 18)); // NOI18N
+        btn_IniciarSesion_.setForeground(new java.awt.Color(153, 102, 255));
+        btn_IniciarSesion_.setText("Iniciar Sesión");
+        btn_IniciarSesion_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_Contraseña_ActionPerformed(evt);
+                btn_IniciarSesion_ActionPerformed(evt);
+            }
+        });
+
+        jPasswordField.setText("jPasswordField1");
+        jPasswordField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jPasswordFieldActionPerformed(evt);
             }
         });
 
@@ -82,25 +106,28 @@ public class InicioSesion extends javax.swing.JFrame {
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGap(117, 117, 117)
-                        .addComponent(btn_SalirA_))
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(jPanel5Layout.createSequentialGroup()
-                                .addComponent(jLabel6)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btn_Contraseña_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel5Layout.createSequentialGroup()
-                                .addComponent(jLabel5)
-                                .addGap(67, 67, 67)
-                                .addComponent(btn_Usuario_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGap(102, 102, 102)
-                        .addComponent(jLabel3)))
-                .addContainerGap(102, Short.MAX_VALUE))
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(btn_SalirA_)
+                    .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel5Layout.createSequentialGroup()
+                            .addGap(102, 102, 102)
+                            .addComponent(jLabel3))
+                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
+                                .addGap(18, 18, 18)
+                                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel5Layout.createSequentialGroup()
+                                        .addComponent(jLabel6)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(jPanel5Layout.createSequentialGroup()
+                                        .addComponent(jLabel5)
+                                        .addGap(67, 67, 67)
+                                        .addComponent(btn_Usuario_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel5Layout.createSequentialGroup()
+                                .addGap(93, 93, 93)
+                                .addComponent(btn_IniciarSesion_)))))
+                .addContainerGap(126, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -114,10 +141,12 @@ public class InicioSesion extends javax.swing.JFrame {
                 .addGap(30, 30, 30)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
-                    .addComponent(btn_Contraseña_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 96, Short.MAX_VALUE)
+                    .addComponent(jPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(34, 34, 34)
+                .addComponent(btn_IniciarSesion_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 44, Short.MAX_VALUE)
                 .addComponent(btn_SalirA_)
-                .addGap(17, 17, 17))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -144,7 +173,7 @@ public class InicioSesion extends javax.swing.JFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(43, 43, 43)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(25, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -177,9 +206,79 @@ public class InicioSesion extends javax.swing.JFrame {
 
     }//GEN-LAST:event_btn_Usuario_ActionPerformed
 
-    private void btn_Contraseña_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Contraseña_ActionPerformed
+    private void btn_IniciarSesion_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_IniciarSesion_ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_btn_Contraseña_ActionPerformed
+  String nombreUsuario = btn_Usuario_.getText();
+        String contraseña = new String(jPasswordField.getPassword());
+
+        // Verificar si los campos están vacíos
+        if (nombreUsuario.isEmpty() || contraseña.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor, ingrese el nombre de usuario y la contraseña.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Crear la conexión a la base de datos
+        Connection conexion = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            conexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
+
+            // Consulta SQL para verificar el usuario y la contraseña
+            String sql = "SELECT * FROM Usuarios WHERE NombreUsuario = ? AND Contraseña = ?";
+            stmt = conexion.prepareStatement(sql);
+            stmt.setString(1, nombreUsuario);
+            stmt.setString(2, contraseña);
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // El usuario y la contraseña son válidos
+                JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+                // Cerrar la ventana de inicio de sesión
+                this.dispose();
+
+                // Abrir la ventana principal (Menu)
+                Menu ventanaMenu = new Menu();
+                ventanaMenu.setVisible(true);
+            } else {
+                // El usuario o la contraseña son incorrectos
+                JOptionPane.showMessageDialog(this, "Nombre de usuario o contraseña incorrectos.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // Cerrar los recursos
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            if (conexión != null) {
+                try {
+                    conexion.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_btn_IniciarSesion_ActionPerformed
+
+    private void jPasswordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jPasswordFieldActionPerformed
 
     /**
      * @param args the command line arguments
@@ -217,7 +316,7 @@ public class InicioSesion extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField btn_Contraseña_;
+    private javax.swing.JButton btn_IniciarSesion_;
     private javax.swing.JButton btn_SalirA_;
     private javax.swing.JTextField btn_Usuario_;
     private javax.swing.JLabel jLabel3;
@@ -226,5 +325,16 @@ public class InicioSesion extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPasswordField jPasswordField;
     // End of variables declaration//GEN-END:variables
+
+    private static class contraseña {
+
+        private static boolean isEmpty() {
+            throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        }
+
+        public contraseña() {
+        }
+    }
 }

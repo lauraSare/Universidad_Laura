@@ -12,6 +12,7 @@ package Controladoor;
 
 import Modelo.Donador;
 import com.mycompany.universidad_laura.conexion.Conexion;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,7 +30,9 @@ public class DonadorDAO {
 
     // Constructor
     public DonadorDAO() {
-        this.conexion = new Conexion();
+Conexion conexion = Conexion.getInstance();
+Connection conn = conexion.getConnection();
+// Realizar operaciones con la conexión   
     }
 
     // Método para realizar la alta de un donador

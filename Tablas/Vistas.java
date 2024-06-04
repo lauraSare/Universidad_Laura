@@ -4,6 +4,7 @@
  */
 package Tablas;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -23,6 +24,14 @@ public class Vistas extends javax.swing.JFrame {
      */
     public Vistas() {
         initComponents();
+    }
+    
+    private void initializeTable() {
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[][]{}, // Datos iniciales vacíos
+                new String[]{"ID_Donador", "Nombre", "Direccion", "Fecha", "Metodo Pago", "Categoria"} // Nombres de columnas
+        );
+        Tabla_Vistas.setModel(model);
     }
 
     /**
@@ -46,13 +55,13 @@ public class Vistas extends javax.swing.JFrame {
 
         Tabla_Vistas.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "ID_Donador", "CantidadGarantizada", "FechaTransacciones"
+                "ID_Donador", "Nombre", "FechaTransacciones", "Metodo Pago", "Categoría"
             }
         ));
         Tabla_Vistas.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -127,31 +136,33 @@ public class Vistas extends javax.swing.JFrame {
 
     private void btn_Vistas_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Vistas_ActionPerformed
         // TODO add your handling code here:
-  try {
-        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
+       try {
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
+            CallableStatement stmt = conn.prepareCall("{CALL ObtenerDatosVista()}");
 
-        String consulta = "SELECT * FROM VistaListado"; // Utilizar la vista creada
+            ResultSet rs = stmt.executeQuery();
 
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery(consulta);
+            DefaultTableModel model = (DefaultTableModel) Tabla_Vistas.getModel();
+            model.setRowCount(0); // Limpiar la tabla antes de mostrar nuevos datos
 
-        DefaultTableModel model = (DefaultTableModel) Tabla_Vistas.getModel();
-        model.setRowCount(0);
+            while (rs.next()) {
+                Object[] fila = {
+                    rs.getInt("ID_Donador"),
+                    rs.getString("Nombre"),
+                    rs.getString("Direccion"),
+                    rs.getDate("Fecha") != null ? new SimpleDateFormat("yyyy-MM-dd").format(rs.getDate("Fecha")) : "",
+                    rs.getString("Metodo_Pago"),
+                    rs.getString("Categoria")
+                };
+                model.addRow(fila);
+            }
 
-        while (rs.next()) {
-            Object[] fila = {
-                rs.getInt("ID_donador"),
-                String.format("%.2f", rs.getDouble("CantidadGarantizada")),
-                rs.getDate("FechaTransacciones") != null ? new SimpleDateFormat("yyyy-MM-dd").format(rs.getDate("FechaTransacciones")) : ""
-            };
-            model.addRow(fila);
+            rs.close();
+            stmt.close();
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        rs.close();
-        stmt.close();
-        conn.close();
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
     }//GEN-LAST:event_btn_Vistas_ActionPerformed
 
     private void btn_MenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_MenuActionPerformed
@@ -208,4 +219,10 @@ public class Vistas extends javax.swing.JFrame {
     private javax.swing.JButton btn_Vistas_;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
+
+    private static class Tabla_Funcion_Almacenado {
+
+        public Tabla_Funcion_Almacenado() {
+        }
+    }
 }

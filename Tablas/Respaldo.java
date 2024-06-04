@@ -39,32 +39,14 @@ public class Respaldo extends javax.swing.JFrame {
     private void initComponents() {
 
         Tabla_Transacciones = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        Tabla_Backup = new javax.swing.JTable();
         btn_Respaldo_ = new javax.swing.JButton();
         btn_Menu = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        Tabla_Backup_ = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         Tabla_Transacciones.setBackground(new java.awt.Color(153, 153, 255));
-
-        Tabla_Backup.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null},
-                {null},
-                {null},
-                {null}
-            },
-            new String [] {
-                "Respalodo_D"
-            }
-        ));
-        Tabla_Backup.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                Tabla_BackupKeyPressed(evt);
-            }
-        });
-        jScrollPane1.setViewportView(Tabla_Backup);
 
         btn_Respaldo_.setFont(new java.awt.Font("Mongolian Baiti", 1, 18)); // NOI18N
         btn_Respaldo_.setForeground(new java.awt.Color(153, 102, 255));
@@ -84,31 +66,44 @@ public class Respaldo extends javax.swing.JFrame {
             }
         });
 
+        Tabla_Backup_.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
+            },
+            new String [] {
+                "Nombre", "ID_Donador", "Dirección", "Fecha", "Metodo Pago", "Categoría"
+            }
+        ));
+        jScrollPane2.setViewportView(Tabla_Backup_);
+
         javax.swing.GroupLayout Tabla_TransaccionesLayout = new javax.swing.GroupLayout(Tabla_Transacciones);
         Tabla_Transacciones.setLayout(Tabla_TransaccionesLayout);
         Tabla_TransaccionesLayout.setHorizontalGroup(
             Tabla_TransaccionesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(Tabla_TransaccionesLayout.createSequentialGroup()
+                .addGap(144, 144, 144)
+                .addComponent(btn_Menu, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(137, 137, 137)
+                .addComponent(btn_Respaldo_)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, Tabla_TransaccionesLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_Menu, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(131, 131, 131)
-                .addComponent(btn_Respaldo_)
-                .addGap(87, 87, 87))
-            .addGroup(Tabla_TransaccionesLayout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 506, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 618, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         Tabla_TransaccionesLayout.setVerticalGroup(
             Tabla_TransaccionesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(Tabla_TransaccionesLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24)
+                .addGap(50, 50, 50)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 177, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(27, 27, 27)
                 .addGroup(Tabla_TransaccionesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_Respaldo_)
-                    .addComponent(btn_Menu))
-                .addContainerGap(54, Short.MAX_VALUE))
+                    .addComponent(btn_Menu)
+                    .addComponent(btn_Respaldo_))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -125,25 +120,15 @@ public class Respaldo extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void Tabla_BackupKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_Tabla_BackupKeyPressed
-      
-
-    }//GEN-LAST:event_Tabla_BackupKeyPressed
-
     private void btn_Respaldo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Respaldo_ActionPerformed
-        // ... (tu código actual de respaldo y eliminación de registros)
+ // Cargar datos en Tabla_Backup desde el archivo CSV
+    cargarDatosEnTablaBackup();
 
-        // Cargar datos en Tabla_Backup después de crear el respaldo y antes de limpiar Donadores
-        cargarDatosEnTablaBackup();
-        // Limpiar la tabla Donadores después de respaldar los datos
-        // ... (tu código actual para limpiar Donadores)
-
-        // Mensaje de éxito
-        JOptionPane.showMessageDialog(this, "Respaldo de Donadores creado correctamente y registros eliminados.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+    // Mensaje de éxito
+    JOptionPane.showMessageDialog(this, "Datos cargados en la tabla de respaldo.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 }
-
 private void cargarDatosEnTablaBackup() {
-    DefaultTableModel model = (DefaultTableModel) Tabla_Backup.getModel();
+    DefaultTableModel model = (DefaultTableModel) Tabla_Backup_.getModel();
     model.setRowCount(0); // Limpiar la tabla antes de cargar los nuevos datos
 
     try (BufferedReader br = new BufferedReader(new FileReader("respaldo_donadores.csv"))) {
@@ -151,12 +136,30 @@ private void cargarDatosEnTablaBackup() {
         while ((line = br.readLine()) != null) {
             String[] data = line.split(",");
 
-            model.addRow(data);
+            // Verificar que el arreglo 'data' tenga la cantidad correcta de elementos
+            if (data.length == 6) {
+                String nombre = data[0];
+                String idDonador = data[1];
+                String direccion = data[2];
+                String fecha = data[3];
+                String metodoPago = data[4];
+                String categoria = data[5];
+
+                // Agregar los datos a la tabla Tabla_Backup
+                model.addRow(new Object[]{nombre, idDonador, direccion, fecha, metodoPago, categoria});
+            }
         }
     } catch (IOException e) {
         e.printStackTrace();
         JOptionPane.showMessageDialog(this, "Error al cargar el respaldo a la tabla.", "Error", JOptionPane.ERROR_MESSAGE);
     }
+}
+
+    private static class Tabla_Backup {
+
+        public Tabla_Backup() {
+        }
+    
     }//GEN-LAST:event_btn_Respaldo_ActionPerformed
 
     private void btn_MenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_MenuActionPerformed
@@ -208,11 +211,11 @@ private void cargarDatosEnTablaBackup() {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTable Tabla_Backup;
+    private javax.swing.JTable Tabla_Backup_;
     private javax.swing.JPanel Tabla_Transacciones;
     private javax.swing.JButton btn_Menu;
     private javax.swing.JButton btn_Respaldo_;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 
 }

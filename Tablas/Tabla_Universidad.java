@@ -10,12 +10,15 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -29,6 +32,8 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 
 
 /**
@@ -49,73 +54,77 @@ private Connection conn;
      * Creates new form Tabla_Universidad
      */
         //CoNSTRUCTOR
-     public Tabla_Universidad() {
-        initComponents();
-        
-        
-         // Agrega un listener para manejar el clic en la tabla
-        Tabla_Universidad.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tablaMouseClicked(evt);
-            }
-
-            private void tablaMouseClicked(MouseEvent evt) {
-                
-            }
-        });
-
-        // CONEXION
-        miConexion = new Conexion();
-
-
-         
+    public Tabla_Universidad() {
+    initComponents();
+    
+    // Agrega un listener para manejar el clic en la tabla
+    Tabla_Universidad.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+            tablaMouseClicked(evt);
+        }
+        private void tablaMouseClicked(MouseEvent evt) {
+        }
+    });
+    
+    // CONEXION
+    // Realizar operaciones con la conexión
+    Conexion conexion = Conexion.getInstance();
+    Connection conn = conexion.getConnection();
+    
     // Agregar opciones al JComboBox de Categoría en el constructor
     Categoria_.setModel(new DefaultComboBoxModel<>(new String[]{"Alumno", "Profesor", "Docente", "Ex-alumno", "Tutores"}));
-
     
     // Initialize comboBoxMetodoPago
-        comboBoxMetodoPago = new JComboBox<>();
-        
+    comboBoxMetodoPago = new JComboBox<>();
+    
     // Inicializa el JComboBox con las opciones de método de pago
     this.comboBoxMetodoPago.setModel(new DefaultComboBoxModel<>(new String[]{"Efectivo", "Deposito", "Transferencia, Banco"}));
     comboBoxMetodoPago.addItem("Efectivo");
     comboBoxMetodoPago.addItem("Deposito");
     comboBoxMetodoPago.addItem(" Transferencia");
     comboBoxMetodoPago.addItem(" Banco");
-
-    cargarDatosIniciales();
-        // Cargar datos iniciales al abrir la ventana
-        cargarDatosIniciales();
-    }
-     
-     
-     
-      private void cargarDatosIniciales() {
-        try {
-            String consulta = "SELECT * FROM Donadores";
-            ResultSet resultado = miConexion.ejecutarConsultaSQL(consulta);
-
-            // Lógica para cargar los datos en la tabla
-            DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
-            while (resultado.next()) {
-                // Aquí debes ajustar según la estructura de tu tabla
-                String nombre = resultado.getString("nombre");
-                String idDonador = resultado.getString("ID_donador");
-                String direccion = resultado.getString("direccion");
-                String fecha = resultado.getString("fecha");
-                String metodoPago = resultado.getString("metodo_pago");
-                String categoria = resultado.getString("categoria");
-
-                model.addRow(new Object[]{nombre, idDonador, direccion, fecha, metodoPago, categoria});
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println("Error al cargar datos iniciales");
+    
+    // Crear y ejecutar el hilo para cargar los datos iniciales
+    SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            cargarDatosIniciales();
+            return null;
         }
+    };
+    worker.execute();
+}
+
+private void cargarDatosIniciales() {
+    try {
+        String consulta = "SELECT * FROM Donadores";
+        ResultSet resultado = Conexion.getInstance().ejecutarConsultaSQL(consulta);
+        
+        // Lógica para cargar los datos en la tabla
+        DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
+        while (resultado.next()) {
+            // Aquí debes ajustar según la estructura de tu tabla
+            String nombre = resultado.getString("nombre");
+            String idDonador = resultado.getString("ID_donador");
+            String direccion = resultado.getString("direccion");
+            String fecha = resultado.getString("fecha");
+            String metodoPago = resultado.getString("metodo_pago");
+            String categoria = resultado.getString("categoria");
+            
+            // Agregar los datos a la tabla en el hilo de despacho de eventos (EDT)
+            SwingUtilities.invokeLater(() -> {
+                model.addRow(new Object[]{nombre, idDonador, direccion, fecha, metodoPago, categoria});
+            });
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        System.out.println("Error al cargar datos iniciales");
     }
-      
-      //ID DONADOR VERIFICAR QUE SEA NUM
-      private boolean esIdNumerico(String idDonador) {
+}
+
+
+// ID DONADOR VERIFICAR QUE SEA NUM
+private boolean esIdNumerico(String idDonador) {
     try {
         // Intenta convertir el ID a un valor numérico
         Integer.parseInt(idDonador);
@@ -126,6 +135,7 @@ private Connection conn;
         return false;
     }
 }
+      
       
       //NOMBRE 
       private boolean esNombreValido(String nombre) {
@@ -168,7 +178,6 @@ private Connection conn;
         jLabel5 = new javax.swing.JLabel();
         btn_ID_Donador_ = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
-        btn_Direccion_ = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         btn_Fecha_ = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
@@ -183,6 +192,7 @@ private Connection conn;
         btn_Limpiar = new javax.swing.JButton();
         Metodo_P_ = new javax.swing.JComboBox<>();
         Categoria_ = new javax.swing.JComboBox<>();
+        btn_Direccion_ = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -256,12 +266,6 @@ private Connection conn;
         jLabel6.setFont(new java.awt.Font("Mongolian Baiti", 0, 16)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
         jLabel6.setText("Dirección");
-
-        btn_Direccion_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_Direccion_ActionPerformed(evt);
-            }
-        });
 
         jLabel7.setFont(new java.awt.Font("Mongolian Baiti", 0, 16)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
@@ -362,6 +366,12 @@ private Connection conn;
             }
         });
 
+        btn_Direccion_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_Direccion_ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -370,14 +380,15 @@ private Connection conn;
                 .addGap(31, 31, 31)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 618, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(30, 30, 30)
+                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(111, 111, 111)
+                                .addComponent(jLabel6))
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addGap(86, 86, 86)
                                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel8)
                                     .addGroup(jPanel3Layout.createSequentialGroup()
                                         .addGap(25, 25, 25)
                                         .addComponent(jLabel9))
@@ -385,46 +396,45 @@ private Connection conn;
                                         .addGap(6, 6, 6)
                                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(Categoria_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(Metodo_P_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGap(30, 30, 30)
-                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(111, 111, 111)
-                                .addComponent(jLabel6))
+                                            .addComponent(Metodo_P_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(jLabel8))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 618, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addComponent(btn_Nombre_A, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(btn_Direccion_, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(72, 72, 72))))
+                                .addGap(44, 44, 44)
+                                .addComponent(btn_Direccion_, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE))))
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(158, 158, 158)
-                        .addComponent(jLabel7))
+                        .addGap(137, 137, 137)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel5)
+                            .addComponent(btn_ID_Donador_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGap(137, 137, 137)
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel5)
-                                    .addComponent(btn_ID_Donador_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGap(80, 80, 80)
-                                .addComponent(btn_Fecha_, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(118, 118, 118)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(btn_Agregar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btn_Eliminar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(btn_Consultar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(68, 68, 68)
-                                .addComponent(btn_Modificar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                                .addComponent(btn_Limpiar, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(88, 88, 88)))))
+                        .addGap(106, 106, 106)
+                        .addComponent(btn_Fecha_, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(147, 147, 147)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(btn_Agregar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btn_Eliminar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(btn_Consultar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(68, 68, 68)
+                        .addComponent(btn_Modificar_, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addComponent(btn_Limpiar, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(88, 88, 88)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(154, 154, 154)
+                .addComponent(jLabel7)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -436,7 +446,9 @@ private Connection conn;
                         .addGap(12, 12, 12)
                         .addComponent(btn_ID_Donador_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(6, 6, 6)
-                        .addComponent(jLabel6))
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btn_Direccion_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(36, 36, 36)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -447,20 +459,18 @@ private Connection conn;
                                 .addGap(20, 20, 20)
                                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(btn_Nombre_A, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(btn_Direccion_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(btn_Nombre_A, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(btn_Agregar_)
                                     .addComponent(btn_Eliminar_))))))
-                .addGap(13, 13, 13)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel7)
-                .addGap(3, 3, 3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_Fecha_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_Limpiar))
+                    .addComponent(btn_Limpiar)
+                    .addComponent(btn_Fecha_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(15, 15, 15)
                 .addComponent(jLabel8)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -490,9 +500,8 @@ private Connection conn;
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(17, 17, 17)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -578,30 +587,6 @@ private boolean esIdRepetido(String nuevoId) {
     return false;
     }//GEN-LAST:event_btn_ID_Donador_ActionPerformed
 
-    private void btn_Direccion_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Direccion_ActionPerformed
-        // TODO add your handling code here:
-
-         // Obtiene el texto ingresado en la caja de texto
-    String direccion = btn_Direccion_.getText().trim();
-
-    // Define una expresión regular que permite letras, números y acentos
-    String regex = "^[\\p{L}0-9]+$";
-
-    // Verifica si la dirección cumple con la expresión regular
-    if (direccion.matches(regex)) {
-        // Si es válida, agrega la dirección a la tabla
-        DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
-        model.addRow(new Object[]{"", "", direccion, "", ""}); // Añade la dirección a la tercera columna
-
-          // Limpia el campo de texto después de agregar el nombre
-        btn_Direccion_.setText("");
-    } else {
-        // Si no es válida, puedes mostrar un mensaje de error o tomar alguna otra acción
-        System.out.println("Dirección no válida. Por favor, ingrese solo letras, números y acentos.");
-    }
-        
-    }//GEN-LAST:event_btn_Direccion_ActionPerformed
-
     private void btn_Fecha_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Fecha_ActionPerformed
         // TODO add your handling code here:
  
@@ -642,173 +627,182 @@ private boolean esIdRepetido(String nuevoId) {
 
     private void btn_Modificar_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Modificar_ActionPerformed
        // TODO add your handling code here:
-  // Obtener la fila seleccionada en la tabla
-    int filaSeleccionada = Tabla_Universidad.getSelectedRow();
-    
-    // Verificar si hay una fila seleccionada
-    if (filaSeleccionada == -1) {
-        JOptionPane.showMessageDialog(this, "Por favor, selecciona una fila para modificar.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
+       //Hilo
+    SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            // Obtener la fila seleccionada en la tabla
+            int filaSeleccionada = Tabla_Universidad.getSelectedRow();
 
-    // Obtener el ID original
-    String idDonadorActual = Tabla_Universidad.getValueAt(filaSeleccionada, 1).toString();
+            // Construir la instrucción SQL de actualización
+            String instruccionSQL = "UPDATE Donadores SET nombre = ?, ID_donador = ?, direccion = ?, fecha = ?, metodo_pago = ?, categoria = ? WHERE ID_donador = ?";
 
-    // Obtener los nuevos valores desde los campos de texto u otros componentes
-    String nuevoNombre = btn_Nombre_A.getText().trim();
-    String nuevoIdDonador = btn_ID_Donador_.getText().trim();
-    String nuevaDireccion = btn_Direccion_.getText().trim();
-    String nuevaFechaTexto = btn_Fecha_.getText().trim();
+            Conexion conexion = Conexion.getInstance();
+            Connection conn = conexion.getConnection();
 
-    // Verificar si hay elementos seleccionados en los JComboBox
-    String nuevoMetodoPago = (Metodo_P_.getSelectedItem() != null) ? Metodo_P_.getSelectedItem().toString().trim() : "";
-    String nuevaCategoria = (Categoria_.getSelectedItem() != null) ? Categoria_.getSelectedItem().toString().trim() : "";
-
-    // Validar si algún campo obligatorio está vacío
-    if (nuevoNombre.isEmpty() || nuevoIdDonador.isEmpty() || nuevaDireccion.isEmpty() || nuevaFechaTexto.isEmpty() || nuevoMetodoPago.isEmpty() || nuevaCategoria.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Por favor, completa todos los campos obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-
-    // Verificar el formato de la fecha
-    DateTimeFormatter formatterEntrada = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    DateTimeFormatter formatterSalida = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    
-    try {
-        // Intentar parsear la fecha
-        LocalDate nuevaFecha = LocalDate.parse(nuevaFechaTexto, formatterEntrada);
-        String nuevaFechaFormateada = formatterSalida.format(nuevaFecha);
-
-        // Construir la instrucción SQL de actualización
-        String instruccionSQL = "UPDATE Donadores SET nombre = ?, ID_donador = ?, direccion = ?, fecha = ?, metodo_pago = ?, categoria = ? WHERE ID_donador = ?";
-
-        // Crear la conexión
-        miConexion = new Conexion();
-
-        try (PreparedStatement pstmt = miConexion.prepareStatement(instruccionSQL)) {
-            pstmt.setString(1, nuevoNombre);
-            pstmt.setString(2, nuevoIdDonador);
-            pstmt.setString(3, nuevaDireccion);
-            pstmt.setString(4, nuevaFechaFormateada);
-            pstmt.setString(5, nuevoMetodoPago);
-            pstmt.setString(6, nuevaCategoria);
-            pstmt.setString(7, idDonadorActual); // Usar el ID original en la cláusula WHERE
-
-            // Ejecutar la instrucción SQL
-            int filasAfectadas = pstmt.executeUpdate();
-
-            // Realizar commit
-            boolean commitExitoso = miConexion.commit();
-
-            // Mostrar mensaje según el resultado de la actualización y el commit
-            if (filasAfectadas > 0 && commitExitoso) {
-                JOptionPane.showMessageDialog(this, "Registro modificado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-
-                // Actualizar la fila en la tabla con los nuevos valores
-                DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
-                model.setValueAt(nuevoNombre, filaSeleccionada, 0);
-                model.setValueAt(nuevoIdDonador, filaSeleccionada, 1);
-                model.setValueAt(nuevaDireccion, filaSeleccionada, 2);
-                model.setValueAt(nuevaFechaFormateada, filaSeleccionada, 3);
-                model.setValueAt(nuevoMetodoPago, filaSeleccionada, 4);
-                model.setValueAt(nuevaCategoria, filaSeleccionada, 5);
-
-                // Limpiar los campos después de la actualización
-                limpiarCampos();
-            } else {
-                JOptionPane.showMessageDialog(this, "Error al modificar el registro", "Error", JOptionPane.ERROR_MESSAGE);
+            // Verificar si hay una fila seleccionada
+            if (filaSeleccionada == -1) {
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Por favor, selecciona una fila para modificar.", "Error", JOptionPane.ERROR_MESSAGE);
+                return null;
             }
-        } catch (SQLIntegrityConstraintViolationException e) {
-            // Manejar la violación de restricción de integridad (ID duplicado)
-            JOptionPane.showMessageDialog(this, "El ID ya existe en la base de datos. Por favor, elija otro ID.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;  // Salir del método para evitar la actualización después de la excepción
-        } catch (DateTimeParseException e) {
-            // Manejar error de formato de fecha
-            JOptionPane.showMessageDialog(this, "Formato de fecha incorrecto. Use el formato dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error al ejecutar la instrucción SQL", "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            // Cerrar la conexión
-            miConexion.cerrarConexion();
+
+            // Obtener el ID original
+            String idDonadorActual = Tabla_Universidad.getValueAt(filaSeleccionada, 1).toString();
+
+            // Obtener los nuevos valores desde los campos de texto u otros componentes
+            String nuevoNombre = btn_Nombre_A.getText().trim();
+            String nuevoIdDonador = btn_ID_Donador_.getText().trim();
+            String nuevaDireccion = btn_Direccion_.getText().trim();
+            String nuevaFechaTexto = btn_Fecha_.getText().trim();
+
+            // Verificar si hay elementos seleccionados en los JComboBox
+            String nuevoMetodoPago = (Metodo_P_.getSelectedItem() != null) ? Metodo_P_.getSelectedItem().toString().trim() : "";
+            String nuevaCategoria = (Categoria_.getSelectedItem() != null) ? Categoria_.getSelectedItem().toString().trim() : "";
+
+            // Validar si algún campo obligatorio está vacío
+            if (nuevoNombre.isEmpty() || nuevoIdDonador.isEmpty() || nuevaDireccion.isEmpty() || nuevaFechaTexto.isEmpty() || nuevoMetodoPago.isEmpty() || nuevaCategoria.isEmpty()) {
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Por favor, completa todos los campos obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+
+            // Verificar el formato de la fecha
+            DateTimeFormatter formatterEntrada = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter formatterSalida = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            try {
+                // Intentar parsear la fecha
+                LocalDate nuevaFecha = LocalDate.parse(nuevaFechaTexto, formatterEntrada);
+                String nuevaFechaFormateada = formatterSalida.format(nuevaFecha);
+
+                try (PreparedStatement pstmt = conn.prepareStatement(instruccionSQL)) {
+                    pstmt.setString(1, nuevoNombre);
+                    pstmt.setString(2, nuevoIdDonador);
+                    pstmt.setString(3, nuevaDireccion);
+                    pstmt.setString(4, nuevaFechaFormateada);
+                    pstmt.setString(5, nuevoMetodoPago);
+                    pstmt.setString(6, nuevaCategoria);
+                    pstmt.setString(7, idDonadorActual); // Usar el ID original en la cláusula WHERE
+
+                    // Ejecutar la instrucción SQL
+                    int filasAfectadas = pstmt.executeUpdate();
+
+                    // Realizar commit
+                    boolean commitExitoso = conexion.commit();
+
+                    // Mostrar mensaje según el resultado de la actualización y el commit
+                    if (filasAfectadas > 0 && commitExitoso) {
+                        JOptionPane.showMessageDialog(Tabla_Universidad.this, "Registro modificado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+                        // Actualizar la fila en la tabla con los nuevos valores
+                        DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
+                        model.setValueAt(nuevoNombre, filaSeleccionada, 0);
+                        model.setValueAt(nuevoIdDonador, filaSeleccionada, 1);
+                        model.setValueAt(nuevaDireccion, filaSeleccionada, 2);
+                        model.setValueAt(nuevaFechaFormateada, filaSeleccionada, 3);
+                        model.setValueAt(nuevoMetodoPago, filaSeleccionada, 4);
+                        model.setValueAt(nuevaCategoria, filaSeleccionada, 5);
+
+                        // Limpiar los campos después de la actualización
+                        limpiarCampos();
+                    } else {
+                        JOptionPane.showMessageDialog(Tabla_Universidad.this, "Error al modificar el registro", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLIntegrityConstraintViolationException e) {
+                    // Manejar la violación de restricción de integridad (ID duplicado)
+                    JOptionPane.showMessageDialog(Tabla_Universidad.this, "El ID ya existe en la base de datos. Por favor, elija otro ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (DateTimeParseException e) {
+                    // Manejar error de formato de fecha
+                    JOptionPane.showMessageDialog(Tabla_Universidad.this, "Formato de fecha incorrecto. Use el formato dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(Tabla_Universidad.this, "Error al ejecutar la instrucción SQL", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (DateTimeParseException e) {
+                // Manejar error de formato de fecha
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Formato de fecha incorrecto. Use el formato dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            return null;
         }
-    } catch (DateTimeParseException e) {
-        // Manejar error de formato de fecha
-        JOptionPane.showMessageDialog(this, "Formato de fecha incorrecto. Use el formato dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
-     }  
+    };
+    worker.execute();
+
     }//GEN-LAST:event_btn_Modificar_ActionPerformed
 
     private void btn_Agregar_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Agregar_ActionPerformed
        // TODO add your handling code here:
-    String nombreText = btn_Nombre_A.getText().trim();
-    String idDonadorText = btn_ID_Donador_.getText().trim();
-    String direccionText = btn_Direccion_.getText().trim();
-    String fechaText = btn_Fecha_.getText().trim();
-    String metodoPagoText = Metodo_P_.getSelectedItem().toString().trim();
-    String categoriaText = Categoria_.getSelectedItem().toString().trim();
-   
-    String fechaMySQLFormat = formatFechaMySQL(fechaText);
+       //Hilo
+     SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            String nombreText = btn_Nombre_A.getText().trim();
+            String idDonadorText = btn_ID_Donador_.getText().trim();
+            String direccionText = btn_Direccion_.getText().trim();
+            String fechaText = btn_Fecha_.getText().trim();
+            String metodoPagoText = Metodo_P_.getSelectedItem().toString().trim();
+            String categoriaText = Categoria_.getSelectedItem().toString().trim();
 
-    // Verificar si algún campo obligatorio está vacío
-    if (nombreText.isEmpty() || idDonadorText.isEmpty() || direccionText.isEmpty() || fechaMySQLFormat == null) {
-        JOptionPane.showMessageDialog(this, "Por favor, completa todos los campos obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
+            String fechaMySQLFormat = formatFechaMySQL(fechaText);
 
-    // Construir la instrucción SQL de inserción
-    String instruccionSQL = "INSERT INTO Donadores (nombre, ID_donador, direccion, fecha, metodo_pago, categoria) "
-            + "VALUES (?, ?, ?, ?, ?, ?)";
+            // Verificar si algún campo obligatorio está vacío
+            if (nombreText.isEmpty() || idDonadorText.isEmpty() || direccionText.isEmpty() || fechaMySQLFormat == null) {
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Por favor, completa todos los campos obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
 
-    // Crear la conexión
-    miConexion = new Conexion();
+            // Construir la instrucción SQL de inserción
+            String instruccionSQL = "INSERT INTO Donadores (nombre, ID_donador, direccion, fecha, metodo_pago, categoria) "
+                    + "VALUES (?, ?, ?, ?, ?, ?)";
 
-    try (PreparedStatement pstmt = miConexion.prepareStatement(instruccionSQL)) {
-        pstmt.setString(1, nombreText);
-        pstmt.setString(2, idDonadorText);
-        pstmt.setString(3, direccionText);
-        pstmt.setString(4, fechaMySQLFormat);
-        pstmt.setString(5, metodoPagoText);
-        pstmt.setString(6, categoriaText);
+            // Crear la conexión
+            Conexion conexion = Conexion.getInstance();
+            Connection conn = conexion.getConnection();
 
-        // Ejecutar la instrucción SQL
-        int filasAfectadas = pstmt.executeUpdate();
+            try (PreparedStatement pstmt = conn.prepareStatement(instruccionSQL)) {
+                pstmt.setString(1, nombreText);
+                pstmt.setString(2, idDonadorText);
+                pstmt.setString(3, direccionText);
+                pstmt.setString(4, fechaMySQLFormat);
+                pstmt.setString(5, metodoPagoText);
+                pstmt.setString(6, categoriaText);
 
-        // Realizar commit
-        boolean commitExitoso = miConexion.commit();
+                // Ejecutar la instrucción SQL
+                int filasAfectadas = pstmt.executeUpdate();
 
-        // Mostrar mensaje según el resultado de la inserción y el commit
-       if (filasAfectadas > 0 && commitExitoso) {
-    JOptionPane.showMessageDialog(this, "Registro guardado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                // Realizar commit
+                boolean commitExitoso = conexion.commit();
 
-    // Actualizar la tabla después de una inserción exitosa
-    DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
-    model.addRow(new Object[]{nombreText, idDonadorText, direccionText, fechaMySQLFormat, metodoPagoText, categoriaText});
+                // Mostrar mensaje según el resultado de la inserción y el commit
+                if (filasAfectadas > 0 && commitExitoso) {
+                    JOptionPane.showMessageDialog(Tabla_Universidad.this, "Registro guardado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-    // Limpiar los campos después de la inserción
-    btn_Nombre_A.setText("");
-    btn_ID_Donador_.setText("");
-    btn_Direccion_.setText("");
-    btn_Fecha_.setText("");
-    Metodo_P_.setSelectedItem(null);  // Limpiar selección
-    Categoria_.setSelectedItem(null);  // Limpiar selección
-} else {
-    JOptionPane.showMessageDialog(this, "Error al guardar el registro", "Error", JOptionPane.ERROR_MESSAGE);
-}
-    } catch (SQLIntegrityConstraintViolationException e) {
-        // Manejar la violación de restricción de integridad (ID duplicado)
-        JOptionPane.showMessageDialog(this, "El ID ya existe en la base de datos. Por favor, elija otro ID.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;  // Salir del método para evitar la inserción después de la excepción
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error al ejecutar la instrucción SQL", "Error", JOptionPane.ERROR_MESSAGE);
-    } finally {
-        // Limpiar campos después de agregar
-        limpiarCampos();
+                    // Actualizar la tabla después de una inserción exitosa
+                    DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
+                    model.addRow(new Object[]{nombreText, idDonadorText, direccionText, fechaMySQLFormat, metodoPagoText, categoriaText});
 
-        // Cerrar la conexión
-        miConexion.cerrarConexion();
-    }
+                    // Limpiar los campos después de la inserción
+                    btn_Nombre_A.setText("");
+                    btn_ID_Donador_.setText("");
+                    btn_Direccion_.setText("");
+                    btn_Fecha_.setText("");
+                    Metodo_P_.setSelectedItem(null); // Limpiar selección
+                    Categoria_.setSelectedItem(null); // Limpiar selección
+                } else {
+                    JOptionPane.showMessageDialog(Tabla_Universidad.this, "Error al guardar el registro", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLIntegrityConstraintViolationException e) {
+                // Manejar la violación de restricción de integridad (ID duplicado)
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "El ID ya existe en la base de datos. Por favor, elija otro ID.", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Error al ejecutar la instrucción SQL", "Error", JOptionPane.ERROR_MESSAGE);
+            } finally {
+                // Limpiar campos después de agregar
+                limpiarCampos();
+            }
+            return null;
+        }
+    };
+    worker.execute();
 }
 
 // Método para formatear la fecha al formato de MySQL ("YYYY-MM-DD")
@@ -822,115 +816,146 @@ private String formatFechaMySQL(String fecha) {
         // Manejar la excepción, por ejemplo, mostrar un mensaje de error
         System.out.println("Error al formatear la fecha: " + ex.getMessage());
         return null;
-    }
-
+       }
     }//GEN-LAST:event_btn_Agregar_ActionPerformed
 
 
     private void btn_Eliminar_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Eliminar_ActionPerformed
         // TODO add your handling code here:
-    
-         // Obtener la fila seleccionada en la tabla
-    int filaSeleccionada = Tabla_Universidad.getSelectedRow();
+// Hilo
+    SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            // Obtener la fila seleccionada en la tabla
+            int filaSeleccionada = Tabla_Universidad.getSelectedRow();
 
-    // Verificar si se ha seleccionado alguna fila
-    if (filaSeleccionada == -1) {
-        JOptionPane.showMessageDialog(this, "Por favor, selecciona una fila para eliminar.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
+            // Verificar si se ha seleccionado alguna fila
+            if (filaSeleccionada == -1) {
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Por favor, selecciona una fila para eliminar.", "Error", JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
 
-    // Obtener el ID o algún identificador único de la fila seleccionada
-    String idDonadorAEliminar = Tabla_Universidad.getValueAt(filaSeleccionada, 1).toString();
+            // Obtener el ID o algún identificador único de la fila seleccionada
+            String idDonadorAEliminar = Tabla_Universidad.getValueAt(filaSeleccionada, 1).toString();
 
-    // Construir la instrucción SQL para eliminar
-    String instruccionSQLEliminar = "DELETE FROM Donadores WHERE ID_donador = ?";
+            // Guardar el registro eliminado en un archivo CSV de respaldo
+            try (FileWriter writer = new FileWriter("respaldo_donadores.csv", true)) {
+                // Obtener los datos del registro eliminado
+                String nombre = Tabla_Universidad.getValueAt(filaSeleccionada, 0).toString();
+                String idDonador = Tabla_Universidad.getValueAt(filaSeleccionada, 1).toString();
+                String direccion = Tabla_Universidad.getValueAt(filaSeleccionada, 2).toString();
+                String fecha = Tabla_Universidad.getValueAt(filaSeleccionada, 3).toString();
+                String metodoPago = Tabla_Universidad.getValueAt(filaSeleccionada, 4).toString();
+                String categoria = Tabla_Universidad.getValueAt(filaSeleccionada, 5).toString();
 
-    try (PreparedStatement pstmt = miConexion.prepareStatement(instruccionSQLEliminar)) {
-        pstmt.setString(1, idDonadorAEliminar);
+                // Escribir los datos en el archivo CSV
+                writer.write(nombre + "," + idDonador + "," + direccion + "," + fecha + "," + metodoPago + "," + categoria + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Error al guardar el registro eliminado en el respaldo.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
 
-        // Ejecutar la instrucción SQL
-        int filasAfectadas = pstmt.executeUpdate();
+            // Construir la instrucción SQL para eliminar
+            String instruccionSQLEliminar = "DELETE FROM Donadores WHERE ID_donador = ?";
 
-        // Realizar commit
-        boolean commitExitoso = miConexion.commit();
+            Conexion conexion = Conexion.getInstance();
+            Connection conn = conexion.getConnection();
 
-        // Mostrar mensaje según el resultado de la eliminación y el commit
-        if (filasAfectadas > 0 && commitExitoso) {
-            JOptionPane.showMessageDialog(this, "Registro eliminado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            try (PreparedStatement pstmt = conn.prepareStatement(instruccionSQLEliminar)) {
+                pstmt.setString(1, idDonadorAEliminar);
 
-            // Eliminar la fila de la tabla
-            DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
-            model.removeRow(filaSeleccionada);
+                // Ejecutar la instrucción SQL
+                int filasAfectadas = pstmt.executeUpdate();
 
-            // Actualizar la tabla después de una eliminación exitosa
-            model.fireTableDataChanged();
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al eliminar el registro", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error al ejecutar la instrucción SQL", "Error", JOptionPane.ERROR_MESSAGE);
-    } finally {
-        // Cerrar la conexión
-        miConexion.cerrarConexion();
-       } 
-    }//GEN-LAST:event_btn_Eliminar_ActionPerformed
+                // Realizar commit
+                boolean commitExitoso = conexion.commit();
 
-    private void btn_Consultar_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Consultar_ActionPerformed
-                // TODO add your handling code here:
+                // Mostrar mensaje según el resultado de la eliminación y el commit
+                if (filasAfectadas > 0 && commitExitoso) {
+                    JOptionPane.showMessageDialog(Tabla_Universidad.this, "Registro eliminado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-// Mostrar un cuadro de diálogo para seleccionar el campo de búsqueda
-    String[] opcionesCampos = {"Nombre", "ID Donador", "Dirección", "Fecha", "Método de Pago", "Categoría"};
-    String campoSeleccionado = (String) JOptionPane.showInputDialog(
-            null,
-            "Seleccione el campo por el cual desea buscar:",
-            "Selección de Campo",
-            JOptionPane.PLAIN_MESSAGE,
-            null,
-            opcionesCampos,
-            opcionesCampos[0]);
-
-    if (campoSeleccionado != null) {
-        // Obtener el valor del campo que se ingresará en la caja de texto
-        String valorCampoConsulta = JOptionPane.showInputDialog("Ingrese el valor del campo " + campoSeleccionado + " que desea consultar:");
-
-        // Verificar si se ingresó un valor
-        if (valorCampoConsulta != null && !valorCampoConsulta.isEmpty()) {
-            String consultaSQL = "SELECT * FROM Donadores WHERE " + obtenerNombreCampoSQL(campoSeleccionado) + " = ?";
-
-            try (PreparedStatement pstmt = miConexion.prepareStatement(consultaSQL)) {
-                // Utilizar el operador de igualdad (=) en lugar de LIKE para hacer la búsqueda más específica
-                pstmt.setString(1, valorCampoConsulta);
-
-                ResultSet rs = pstmt.executeQuery();
-
-                if (rs.next()) {
-                    // Si se encontraron resultados, mostrarlos en la tabla
+                    // Eliminar la fila de la tabla
                     DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
-                    model.setRowCount(0); // Limpiar la tabla antes de agregar nuevos resultados
+                    model.removeRow(filaSeleccionada);
 
-                    do {
-                        Object[] row = {
-                                rs.getString("nombre"),
-                                rs.getString("ID_donador"),
-                                rs.getString("direccion"),
-                                rs.getString("fecha"),
-                                rs.getString("metodo_pago"),
-                                rs.getString("categoria")
-                        };
-                        model.addRow(row);
-                    } while (rs.next());
+                    // Actualizar la tabla después de una eliminación exitosa
+                    model.fireTableDataChanged();
                 } else {
-                    JOptionPane.showMessageDialog(null, "No se encontraron registros con el valor proporcionado en el campo " + campoSeleccionado + ".", "Consulta", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(Tabla_Universidad.this, "Error al eliminar el registro", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Error al ejecutar la consulta SQL", "Error", JOptionPane.ERROR_MESSAGE);
-            } finally {
-                miConexion.cerrarConexion();
+                JOptionPane.showMessageDialog(Tabla_Universidad.this, "Error al ejecutar la instrucción SQL", "Error", JOptionPane.ERROR_MESSAGE);
             }
+            return null;
         }
-    }
+    };
+    worker.execute();
+
+    }//GEN-LAST:event_btn_Eliminar_ActionPerformed
+
+    private void btn_Consultar_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Consultar_ActionPerformed
+       // TODO add your handling code here:
+       SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            // Mostrar un cuadro de diálogo para seleccionar el campo de búsqueda
+            String[] opcionesCampos = {"Nombre", "ID Donador", "Dirección", "Fecha", "Método de Pago", "Categoría"};
+            String campoSeleccionado = (String) JOptionPane.showInputDialog(
+                    null,
+                    "Seleccione el campo por el cual desea buscar:",
+                    "Selección de Campo",
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    opcionesCampos,
+                    opcionesCampos[0]);
+
+            if (campoSeleccionado != null) {
+                // Obtener el valor del campo que se ingresará en la caja de texto
+                String valorCampoConsulta = JOptionPane.showInputDialog("Ingrese el valor del campo " + campoSeleccionado + " que desea consultar:");
+
+                // Verificar si se ingresó un valor
+                if (valorCampoConsulta != null && !valorCampoConsulta.isEmpty()) {
+                    String consultaSQL = "SELECT * FROM Donadores WHERE " + obtenerNombreCampoSQL(campoSeleccionado) + " = ?";
+
+                    Conexion conexion = Conexion.getInstance();
+                    Connection conn = conexion.getConnection();
+
+                    try (PreparedStatement pstmt = conn.prepareStatement(consultaSQL)) {
+                        // Utilizar el operador de igualdad (=) en lugar de LIKE para hacer la búsqueda más específica
+                        pstmt.setString(1, valorCampoConsulta);
+
+                        ResultSet rs = pstmt.executeQuery();
+
+                        if (rs.next()) {
+                            // Si se encontraron resultados, mostrarlos en la tabla
+                            DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
+                            model.setRowCount(0); // Limpiar la tabla antes de agregar nuevos resultados
+
+                            do {
+                                Object[] row = {
+                                    rs.getString("nombre"),
+                                    rs.getString("ID_donador"),
+                                    rs.getString("direccion"),
+                                    rs.getString("fecha"),
+                                    rs.getString("metodo_pago"),
+                                    rs.getString("categoria")
+                                };
+                                model.addRow(row);
+                            } while (rs.next());
+                        } else {
+                            JOptionPane.showMessageDialog(null, "No se encontraron registros con el valor proporcionado en el campo " + campoSeleccionado + ".", "Consulta", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error al ejecutar la consulta SQL", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+            return null;
+        }
+    };
+    worker.execute();
 }
 
 // Método para obtener el nombre del campo en la base de datos
@@ -951,7 +976,6 @@ private String obtenerNombreCampoSQL(String campoInterfaz) {
         default:
             return "";
         }
-
     }//GEN-LAST:event_btn_Consultar_ActionPerformed
 
     private void btn_LimpiarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_LimpiarActionPerformed
@@ -1011,6 +1035,30 @@ private String obtenerNombreCampoSQL(String campoInterfaz) {
         this.dispose();
 
     }//GEN-LAST:event_btn_MenuActionPerformed
+
+    private void btn_Direccion_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Direccion_ActionPerformed
+       // TODO add your handling code here:
+
+         // Obtiene el texto ingresado en la caja de texto
+    String direccion = btn_Direccion_.getText().trim();
+
+    // Define una expresión regular que permite letras, números y acentos
+    String regex = "^[\\p{L}0-9]+$";
+
+    // Verifica si la dirección cumple con la expresión regular
+    if (direccion.matches(regex)) {
+        // Si es válida, agrega la dirección a la tabla
+        DefaultTableModel model = (DefaultTableModel) Tabla_Universidad.getModel();
+        model.addRow(new Object[]{"", "", direccion, "", ""}); // Añade la dirección a la tercera columna
+
+          // Limpia el campo de texto después de agregar el nombre
+        btn_Direccion_.setText("");
+    } else {
+        // Si no es válida, puedes mostrar un mensaje de error o tomar alguna otra acción
+        System.out.println("Dirección no válida. Por favor, ingrese solo letras, números y acentos.");
+    }
+        
+    }//GEN-LAST:event_btn_Direccion_ActionPerformed
 
     
     /**
