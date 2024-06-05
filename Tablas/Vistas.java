@@ -27,9 +27,9 @@ public class Vistas extends javax.swing.JFrame {
     }
     
     private void initializeTable() {
-        DefaultTableModel model = new DefaultTableModel(
-                new Object[][]{}, // Datos iniciales vacíos
-                new String[]{"ID_Donador", "Nombre", "Direccion", "Fecha", "Metodo Pago", "Categoria"} // Nombres de columnas
+     DefaultTableModel model = new DefaultTableModel(
+            new Object[][]{}, // Datos iniciales vacíos
+            new String[]{"ID_Donador", "Nombre", "Direccion", "Fecha", "Metodo_Pago", "Categoria", "Monto", "FechaTransaccion"} // Nombres de columnas
         );
         Tabla_Vistas.setModel(model);
     }
@@ -55,13 +55,13 @@ public class Vistas extends javax.swing.JFrame {
 
         Tabla_Vistas.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "ID_Donador", "Nombre", "FechaTransacciones", "Metodo Pago", "Categoría"
+                "ID_Donador", "Nombre", "Direccion", "Fecha", "Metodo_Pago", "Categoria"
             }
         ));
         Tabla_Vistas.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -130,18 +130,16 @@ public class Vistas extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void Tabla_VistasKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_Tabla_VistasKeyPressed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_Tabla_VistasKeyPressed
-
     private void btn_Vistas_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Vistas_ActionPerformed
-        // TODO add your handling code here:
+        // TODO add your handling code here: 
        try {
             Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
-            CallableStatement stmt = conn.prepareCall("{CALL ObtenerDatosVista()}");
+            CallableStatement stmt = conn.prepareCall("{call ObtenerDatosVistaOracle()}");
 
+            // Ejecutar el procedimiento almacenado
             ResultSet rs = stmt.executeQuery();
 
+            // Procesar los resultados
             DefaultTableModel model = (DefaultTableModel) Tabla_Vistas.getModel();
             model.setRowCount(0); // Limpiar la tabla antes de mostrar nuevos datos
 
@@ -150,9 +148,11 @@ public class Vistas extends javax.swing.JFrame {
                     rs.getInt("ID_Donador"),
                     rs.getString("Nombre"),
                     rs.getString("Direccion"),
-                    rs.getDate("Fecha") != null ? new SimpleDateFormat("yyyy-MM-dd").format(rs.getDate("Fecha")) : "",
+                    rs.getDate("Fecha"),
                     rs.getString("Metodo_Pago"),
-                    rs.getString("Categoria")
+                    rs.getString("Categoria"),
+                    rs.getDouble("Monto"),
+                    rs.getDate("FechaTransaccion")
                 };
                 model.addRow(fila);
             }
@@ -163,8 +163,50 @@ public class Vistas extends javax.swing.JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }//GEN-LAST:event_btn_Vistas_ActionPerformed
+    }
 
+    private void llamarProcedimientoAlmacenado() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+    private static class Tabla_Vistas {
+
+        public Tabla_Vistas() {
+        }
+
+    }//GEN-LAST:event_btn_Vistas_ActionPerformed
+/*  private void llamarProcedimientoAlmacenado() {
+    try {
+        Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
+        CallableStatement stmt = conn.prepareCall("{call ObtenerDatosVistaOracle()}");
+
+        // Ejecutar el procedimiento almacenado
+        ResultSet rs = stmt.executeQuery();
+
+        // Procesar los resultados
+        DefaultTableModel model = (DefaultTableModel) Tabla_Vistas.getModel();
+        model.setRowCount(0); // Limpiar la tabla antes de mostrar nuevos datos
+
+        while (rs.next()) {
+            Object[] fila = {
+                rs.getInt("ID_Donador"),
+                rs.getString("Nombre"),
+                rs.getString("Direccion"),
+                rs.getDate("Fecha"),
+                rs.getString("Metodo_Pago"),
+                rs.getString("Categoria"),
+                rs.getDouble("Monto"),
+                rs.getDate("FechaTransaccion")
+            };
+            model.addRow(fila);
+        }
+
+        rs.close();
+        stmt.close();
+        conn.close();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}*/
     private void btn_MenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_MenuActionPerformed
         // TODO add your handling code here:
         Menu ventanaMenu = new Menu();
@@ -176,6 +218,13 @@ public class Vistas extends javax.swing.JFrame {
     this.dispose();
     
     }//GEN-LAST:event_btn_MenuActionPerformed
+
+    private void Tabla_VistasKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_Tabla_VistasKeyPressed
+        // TODO add your handling code here:
+                llamarProcedimientoAlmacenado();
+
+        
+    }//GEN-LAST:event_Tabla_VistasKeyPressed
 
     /**
      * @param args the command line arguments

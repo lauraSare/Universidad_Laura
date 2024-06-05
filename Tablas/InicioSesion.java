@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.JOptionPane;
 
+
 /**
  *
  * @author laura
@@ -205,75 +206,114 @@ public class InicioSesion extends javax.swing.JFrame {
     private void btn_Usuario_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_Usuario_ActionPerformed
 
     }//GEN-LAST:event_btn_Usuario_ActionPerformed
+private void registrarAuditoria(String nombreUsuario, boolean exito) {
+    Connection conexion = null;
+    PreparedStatement stmt = null;
+
+    try {
+        conexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
+
+        String sql = "INSERT INTO AuditoriaInicioSesion (usuario, exito) VALUES (?, ?)";
+        stmt = conexion.prepareStatement(sql);
+        stmt.setString(1, nombreUsuario);
+        stmt.setBoolean(2, exito);
+
+        stmt.executeUpdate();
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+    } finally {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        if (conexion != null) {
+            try {
+                conexion.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+}
 
     private void btn_IniciarSesion_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_IniciarSesion_ActionPerformed
         // TODO add your handling code here:
   String nombreUsuario = btn_Usuario_.getText();
-        String contraseña = new String(jPasswordField.getPassword());
+    String contraseña = new String(jPasswordField.getPassword());
 
-        // Verificar si los campos están vacíos
-        if (nombreUsuario.isEmpty() || contraseña.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, ingrese el nombre de usuario y la contraseña.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
-            return;
+    // Verificar si los campos están vacíos
+    if (nombreUsuario.isEmpty() || contraseña.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el nombre de usuario y la contraseña.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    // Crear la conexión a la base de datos
+    Connection conexion = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+
+    try {
+        conexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
+
+        // Consulta SQL para verificar el usuario y la contraseña
+        String sql = "SELECT * FROM Usuarios WHERE NombreUsuario = ? AND Contraseña = ?";
+        stmt = conexion.prepareStatement(sql);
+        stmt.setString(1, nombreUsuario);
+        stmt.setString(2, contraseña);
+
+        rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            // El usuario y la contraseña son válidos
+            JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+            // Registrar éxito en la auditoría
+            registrarAuditoria(nombreUsuario, true);
+
+            // Cerrar la ventana de inicio de sesión
+            this.dispose();
+
+            // Abrir la ventana principal (Menu)
+            Menu ventanaMenu = new Menu();
+            ventanaMenu.setVisible(true);
+        } else {
+            // El usuario o la contraseña son incorrectos
+            JOptionPane.showMessageDialog(this, "Nombre de usuario o contraseña incorrectos.", "Error", JOptionPane.ERROR_MESSAGE);
+
+            // Registrar fallo en la auditoría
+            registrarAuditoria(nombreUsuario, false);
         }
-
-        // Crear la conexión a la base de datos
-        Connection conexion = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            conexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/Univeersidaad", "laura", "laura");
-
-            // Consulta SQL para verificar el usuario y la contraseña
-            String sql = "SELECT * FROM Usuarios WHERE NombreUsuario = ? AND Contraseña = ?";
-            stmt = conexion.prepareStatement(sql);
-            stmt.setString(1, nombreUsuario);
-            stmt.setString(2, contraseña);
-
-            rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                // El usuario y la contraseña son válidos
-                JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-
-                // Cerrar la ventana de inicio de sesión
-                this.dispose();
-
-                // Abrir la ventana principal (Menu)
-                Menu ventanaMenu = new Menu();
-                ventanaMenu.setVisible(true);
-            } else {
-                // El usuario o la contraseña son incorrectos
-                JOptionPane.showMessageDialog(this, "Nombre de usuario o contraseña incorrectos.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            // Cerrar los recursos
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }
-            if (conexión != null) {
-                try {
-                    conexion.close();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+    } finally {
+        // Cerrar los recursos
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         }
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        if (conexion != null) {
+            try {
+                conexion.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+    
     }//GEN-LAST:event_btn_IniciarSesion_ActionPerformed
 
     private void jPasswordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordFieldActionPerformed
@@ -284,6 +324,8 @@ public class InicioSesion extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+        
+        
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.

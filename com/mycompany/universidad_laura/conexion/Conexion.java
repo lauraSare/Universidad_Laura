@@ -20,12 +20,14 @@ public class Conexion {
     private Statement stm;
     private ResultSet rs;
 
+    
+    
     private Conexion() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             String URL = "jdbc:mysql://localhost:3306/Univeersidaad";
             conexion = DriverManager.getConnection(URL, "laura", "laura");
-            conexion.setAutoCommit(false);
+            conexion.setAutoCommit(false);//desabilita el modo de autocommit
             System.out.println("Conexión establecida!!!");
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
