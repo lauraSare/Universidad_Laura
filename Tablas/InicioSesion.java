@@ -380,3 +380,4 @@ private void registrarAuditoria(String nombreUsuario, boolean exito) {
         }
     }
 }
+
